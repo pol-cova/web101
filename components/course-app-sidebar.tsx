@@ -49,7 +49,7 @@ export function CourseAppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
         <p className="px-2 text-xs leading-snug text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
-          Curso: entorno local, API en Next.js y bases de HTTP.
+          Curso: entorno local, API, HTTP, datos y Prisma.
         </p>
       </SidebarHeader>
       <SidebarContent className="overflow-x-hidden overflow-y-auto px-2 max-md:px-0">

@@ -152,9 +152,9 @@ export const courseSections: CourseSection[] = [
   {
     id: "api",
     navLabel: "API en Next.js",
-    title: "Parte 2 — Conceptos y tu primer endpoint",
+    title: "Parte 2 — Conceptos, API, datos y Prisma",
     description:
-      "Primero entiendes qué es una API y cómo funciona HTTP; luego creas una ruta en el mismo proyecto Next.js que devuelve JSON.",
+      "HTTP y tu primer endpoint; luego un modelo tipo POS, el esquema en Prisma, el cliente y un CRUD sencillo sobre productos.",
     steps: [
       {
         id: "que-es-api",
@@ -246,6 +246,34 @@ export const courseSections: CourseSection[] = [
         summary:
           "Dónde colocar las rutas en app/api, cómo se traduce la carpeta a la URL y el contenido mínimo de route.ts para devolver JSON.",
         readingMdxSlug: "api/primer-endpoint",
+      },
+      {
+        id: "er-pos-simple",
+        title: "Modelo de datos sencillo: un POS",
+        summary:
+          "Qué es un diagrama entidad-relación y cómo se ve un proyecto POS (punto de venta) con pocas tablas enlazadas.",
+        readingMdxSlug: "api/er-pos-simple",
+      },
+      {
+        id: "prisma-esquema-tpv",
+        title: "Definir el esquema con Prisma",
+        summary:
+          "schema.prisma, SQLite en local y la primera migración que crea las tablas del modelo.",
+        readingMdxSlug: "api/prisma-esquema-tpv",
+      },
+      {
+        id: "prisma-cliente",
+        title: "Generar y reutilizar el cliente de Prisma",
+        summary:
+          "Cliente tipado, una sola instancia en desarrollo y los comandos generate y Studio.",
+        readingMdxSlug: "api/prisma-cliente",
+      },
+      {
+        id: "primer-crud-productos",
+        title: "Tu primer CRUD: productos por API",
+        summary:
+          "Listar y crear productos desde route.ts con validación mínima del cuerpo JSON.",
+        readingMdxSlug: "api/primer-crud-productos",
       },
     ],
   },

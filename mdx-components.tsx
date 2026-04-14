@@ -1,7 +1,23 @@
 import type { MDXComponents } from "mdx/types"
-import type { ComponentPropsWithoutRef } from "react"
+import {
+  isValidElement,
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+} from "react"
 
+import { Mermaid } from "@/components/mdx-mermaid"
 import { cn } from "@/lib/utils"
+
+function textFromReactNode(node: ReactNode): string {
+  if (node == null || typeof node === "boolean") return ""
+  if (typeof node === "string" || typeof node === "number") return String(node)
+  if (Array.isArray(node)) return node.map(textFromReactNode).join("")
+  if (isValidElement(node)) {
+    const props = node.props as { children?: ReactNode }
+    return textFromReactNode(props.children)
+  }
+  return ""
+}
 
 function Heading2({ children, ...props }: ComponentPropsWithoutRef<"h2">) {
   return (
@@ -34,6 +50,13 @@ function InlineCode({ children, ...props }: ComponentPropsWithoutRef<"code">) {
 }
 
 function Pre({ children, ...props }: ComponentPropsWithoutRef<"pre">) {
+  if (isValidElement(children)) {
+    const p = children.props as { className?: string; children?: ReactNode }
+    if (p.className?.includes("language-mermaid")) {
+      const chart = textFromReactNode(p.children).replace(/\n$/, "")
+      return <Mermaid chart={chart} />
+    }
+  }
   return (
     <pre
       className="my-4 overflow-x-auto rounded-xl border border-border/80 bg-muted/40 p-4 text-xs leading-relaxed text-foreground shadow-inner"

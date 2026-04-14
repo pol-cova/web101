@@ -1,0 +1,71 @@
+**Prisma** describe tu base de datos en un solo archivo (`schema.prisma`): modelos, tipos y relaciones. El CLI genera migraciones (SQL) y el **cliente** tipado que usarás en `route.ts`.
+
+En la plantilla del curso ya tienes el proyecto Node listo: aquí asumimos **SQLite en un fichero local** (`dev.db`), ideal para aprender sin instalar un servidor aparte. Si más adelante usas PostgreSQL en producción, el modelo Prisma es el mismo; solo cambia la URL en `.env`.
+
+## Prisma en la plantilla del curso
+
+La plantilla que clonaste **ya trae Prisma y `@prisma/client`** en las dependencias, y suele incluir la carpeta `prisma/` (con `schema.prisma` inicial) y un `.env` de ejemplo. No hace falta ejecutar `npm install prisma` ni `prisma init` desde cero salvo que estés en un repo sin esas piezas.
+
+En la raíz del proyecto (donde está `package.json`), comprueba que puedes usar el CLI con `npx prisma` (viene del paquete `prisma` en `devDependencies`). Luego abre `.env` y revisa la URL de la base. Para seguir esta lección con **SQLite en un fichero local**, debería ser equivalente a (ajusta la ruta si tu plantilla usa otra convención):
+
+```env
+DATABASE_URL="file:./dev.db"
+```
+
+Para SQLite, el fichero `dev.db` suele vivir **junto al `schema.prisma`** o en `prisma/`; lo importante es que la ruta en `DATABASE_URL` coincida con donde quieres el archivo.
+
+## El esquema que encaja con el POS
+
+Sustituye el contenido de `prisma/schema.prisma` por algo equivalente a esto (nombres y campos alineados con la lección del ER):
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Producto {
+  id     Int            @id @default(autoincrement())
+  nombre String
+  precio Float
+  stock  Int            @default(0)
+  lineas LineaPedido[]
+}
+
+model Pedido {
+  id       Int            @id @default(autoincrement())
+  creadoEn DateTime       @default(now())
+  lineas   LineaPedido[]
+}
+
+model LineaPedido {
+  id         Int      @id @default(autoincrement())
+  cantidad   Int
+  pedidoId   Int
+  pedido     Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  productoId Int
+  producto   Producto @relation(fields: [productoId], references: [id])
+
+  @@index([pedidoId])
+  @@index([productoId])
+}
+```
+
+- `Float` en `precio` simplifica el JSON más adelante; en un sistema real podrías usar `Decimal` y formatear con cuidado.
+- `onDelete: Cascade` en la línea hace que al borrar un pedido (cuando lo implementes) desaparezcan sus líneas; no es obligatorio para el primer CRUD, pero deja el modelo coherente.
+
+## Crear las tablas en el disco
+
+Genera la primera migración y aplícala:
+
+```bash
+npx prisma migrate dev --name init_pos
+```
+
+Esto crea la carpeta `prisma/migrations/`, ejecuta el SQL contra tu SQLite y ejecuta `prisma generate` automáticamente. Si solo quisieras el cliente sin migrar aún, `npx prisma generate` basta.
+
+Cuando el comando termine, tu base ya tiene las tablas `Producto`, `Pedido` y `LineaPedido`. El siguiente paso es **usar el cliente** desde TypeScript sin crear mil instancias en desarrollo.
