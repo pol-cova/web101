@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, Cloud, Globe, Terminal } from "lucide-react"
+import { ArrowRight, BookOpen, Globe, Terminal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { courseSections } from "@/lib/course-data"
@@ -22,9 +22,9 @@ const highlights = [
     body: "Un mismo proyecto sirve la web y rutas de API; tu primer endpoint que devuelve JSON.",
   },
   {
-    icon: Cloud,
-    title: "Producción en Vercel",
-    body: "Subes el repo y despliegas: URL pública, builds y buenas prácticas de hosting.",
+    icon: BookOpen,
+    title: "API y HTTP",
+    body: "Qué es una API, peticiones y respuestas, métodos y JSON; luego tu primer endpoint en el mismo proyecto.",
   },
 ] as const
 
@@ -41,8 +41,8 @@ export default function Page() {
           Desarrollo web con Next.js fullstack y Prisma
         </h1>
         <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-          Recorrido completo: código en tu máquina, API en el mismo repo y despliegue en Vercel, con
-          Prisma para los datos cuando avancemos el temario.
+          Código en tu máquina, fundamentos claros de API y HTTP, y rutas de API en Next.js con Prisma
+          cuando el temario lo incorpore.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Button size="lg" asChild>

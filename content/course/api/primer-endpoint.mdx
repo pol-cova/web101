@@ -1,0 +1,51 @@
+En Next.js con App Router, las rutas de API no van en `pages/api` (eso es el modelo antiguo). Van dentro de `app/api`: cada subcarpeta es un segmento de la URL pública bajo `/api/...`.
+
+El archivo que define el comportamiento se llama `route.ts` (o `route.js`) y exporta funciones con el nombre del método HTTP que quieres atender: GET, POST, PUT, DELETE, etc.
+
+## Cómo se lee la ruta en el disco
+
+La carpeta `app` es la raíz del enrutador. Todo lo que pongas en `app/api/...` se sirve bajo la URL base **`/api/...`** (el segmento `api` forma parte de la ruta pública).
+
+Ejemplo: si creas `app/api/saludo/route.ts`, el navegador o `fetch` pueden llamar a **`/api/saludo`**. Si anidas carpetas, por ejemplo `app/api/v1/users/route.ts`, la URL será **`/api/v1/users`**.
+
+En la plantilla del curso ya existe una carpeta `app/api/` en el repositorio: ahí es donde convive tu API con el resto de la app (misma base de código, mismo despliegue).
+
+```txt
+app/
+  api/
+    saludo/
+      route.ts      →  GET /api/saludo
+    v1/
+      users/
+        route.ts    →  GET /api/v1/users
+```
+
+_Estructura típica (ejemplo)_
+
+## Qué va dentro de route.ts
+
+Ese archivo exporta funciones manejadoras asíncronas. Un **GET** mínimo puede devolver datos con `NextResponse.json(...)` o el objeto `Response` estándar.
+
+No hace falta configurar Express ni un servidor aparte: Next.js enlaza la petición HTTP con la función exportada cuando alguien visita esa URL (o hace `fetch` desde el cliente).
+
+```ts
+import { NextResponse } from "next/server"
+
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    mensaje: "Tu primer endpoint",
+  })
+}
+
+// Otros métodos en el mismo archivo, si los necesitas:
+// export async function POST(request: Request) { ... }
+```
+
+`app/api/saludo/route.ts`
+
+## Probar el endpoint en local
+
+Con **`npm run dev`** activo, abre en el navegador **`http://localhost:3000/api/saludo`** (ajusta el path al archivo que hayas creado). Deberías ver JSON en pantalla.
+
+También puedes probarlo desde la pestaña **Red (Network)** de las herramientas de desarrollo o con `curl` en la terminal: lo importante es que la petición sea **GET** a la misma ruta que definiste en `app/api`.

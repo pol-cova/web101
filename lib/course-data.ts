@@ -1,3 +1,5 @@
+import type { CourseMdxSlug } from "@/lib/course-mdx-registry"
+
 export type CourseStepInteractive =
   | {
       kind: "clone-repo"
@@ -25,11 +27,36 @@ export type CourseStepInteractive =
       afterNotes: string[]
     }
 
+/** Diagramas embebidos en lecciones de solo lectura (ver `components/course-reading/`). */
+export type CourseReadingDiagram = "api-bridge" | "http-roundtrip"
+
+export type CourseReadingSnippet = {
+  /** Ruta de archivo o título del bloque (p. ej. app/api/hello/route.ts) */
+  file?: string
+  code: string
+}
+
+export type CourseStepReading = {
+  lead: string[]
+  sections: Array<{
+    heading: string
+    body: string[]
+    /** Código de ejemplo bajo el texto de la sección */
+    snippet?: CourseReadingSnippet
+  }>
+  diagram?: CourseReadingDiagram
+  /** Pie de figura bajo el diagrama */
+  diagramCaption?: string
+}
+
 export type CourseStep = {
   id: string
   title: string
   summary: string
   interactive?: CourseStepInteractive
+  reading?: CourseStepReading
+  /** Contenido en `content/course/...mdx` (ver `courseMdxBySlug`). Tiene prioridad sobre `reading`. */
+  readingMdxSlug?: CourseMdxSlug
 }
 
 export type CourseSection = {
@@ -125,30 +152,100 @@ export const courseSections: CourseSection[] = [
   {
     id: "api",
     navLabel: "API en Next.js",
-    title: "Parte 2 — Tu primer endpoint de API",
+    title: "Parte 2 — Conceptos y tu primer endpoint",
     description:
-      "Pasas de la interfaz a una ruta en el servidor que devuelve JSON: mismo proyecto Next.js sirviendo front y API.",
+      "Primero entiendes qué es una API y cómo funciona HTTP; luego creas una ruta en el mismo proyecto Next.js que devuelve JSON.",
     steps: [
+      {
+        id: "que-es-api",
+        title: "¿Qué es una API?",
+        summary:
+          "Una forma sencilla de ver las APIs web: la capa que entiende pedidos y devuelve datos sin que tu interfaz se líe con los detalles del servidor.",
+        reading: {
+          lead: [
+            "Una API (Application Programming Interface) es, en la práctica, el contrato entre tu aplicación y el servidor: tú preguntas de forma estandarizada y recibes una respuesta que el navegador o la app saben interpretar.",
+            "No hace falta memorizar la sigla. Piensa en una puerta de entrada: tu pantalla no va directamente a la base de datos; alguien en medio organiza permisos, formato y reglas de negocio.",
+          ],
+          sections: [
+            {
+              heading: "Analogía rápida: el restaurante",
+              body: [
+                "Tú (el cliente) pides un plato al camarero. El camarero no cocina: lleva el pedido a cocina y trae lo que corresponde.",
+                "La API hace de camarero entre tu app y el servidor: traduce «quiero los datos del usuario» en lo que el backend entiende y te devuelve el resultado en un formato acordado (muchas veces JSON).",
+              ],
+            },
+            {
+              heading: "En una app web real",
+              body: [
+                "La interfaz (botones, formularios) dice qué quieres. La API decide cómo obtenerlo de forma segura: consultas a base de datos, validación, errores claros si algo falla.",
+                "Ventaja: puedes cambiar el diseño de la web sin reescribir toda la lógica del servidor, mientras el contrato de la API se mantiene.",
+              ],
+            },
+            {
+              heading: "Y Next.js en todo esto",
+              body: [
+                "En este curso, la API vive en el mismo proyecto que la web: rutas que responden JSON y páginas que los consumen. Un solo repositorio, menos fricción al aprender.",
+              ],
+            },
+          ],
+          diagram: "api-bridge",
+          diagramCaption:
+            "Flujo simplificado: la interfaz pide a la API; la API habla con los datos o servicios internos y devuelve una respuesta ordenada.",
+        },
+      },
+      {
+        id: "http-basico",
+        title: "Conceptos básicos de HTTP",
+        summary:
+          "Petición y respuesta, métodos como GET o POST, códigos de estado y por qué JSON es el formato habitual en APIs modernas.",
+        reading: {
+          lead: [
+            "HTTP es el protocolo que usa el navegador (y muchas apps) para hablar con un servidor: cada acción es una petición y casi siempre recibes una respuesta.",
+            "No tienes que saber todo el estándar de memoria. Con cuatro ideas (petición/respuesta, método, código de estado y cuerpo en JSON) ya puedes seguir el curso con claridad.",
+          ],
+          sections: [
+            {
+              heading: "Petición y respuesta",
+              body: [
+                "Una petición lleva, entre otras cosas, una URL (a qué recurso llamas) y un método (qué tipo de acción es: leer, crear, etc.).",
+                "La respuesta incluye un código de estado (resumen en un número: ¿todo bien?, ¿no encontrado?, ¿error del servidor?) y a menudo un cuerpo con datos, por ejemplo JSON.",
+              ],
+            },
+            {
+              heading: "Métodos que verás al principio",
+              body: [
+                "GET — «trae esto». Se usa para leer datos. No debería cambiar nada en el servidor por sí solo (por eso puedes refrescar o compartir el enlace).",
+                "POST — «envía esto». Se usa para crear algo o enviar un formulario; el cuerpo de la petición lleva la información.",
+              ],
+            },
+            {
+              heading: "Códigos de estado (una pista rápida)",
+              body: [
+                "2xx — salió bien (el clásico 200 OK).",
+                "4xx — problema con lo que pidió el cliente (404 no existe ese recurso, 400 datos inválidos, etc.).",
+                "5xx — problema en el servidor (500 error interno).",
+                "En el navegador, las herramientas de desarrollo (pestaña **Network**) te muestran método, URL, código y cuerpo: es tu mejor amiga para depurar.",
+              ],
+            },
+            {
+              heading: "JSON",
+              body: [
+                "JSON es un formato de texto para datos estructurados (objetos y listas). Es ligero y casi todo el mundo lo entiende: por eso las APIs REST suelen responder JSON.",
+                "Ejemplo mínimo: `{ \"hola\": \"mundo\" }`. En la siguiente lección verás JSON real saliendo de tu propio endpoint en Next.js.",
+              ],
+            },
+          ],
+          diagram: "http-roundtrip",
+          diagramCaption:
+            "Idea visual: el cliente envía una petición (por ejemplo GET); el servidor responde con un código (200) y un cuerpo en JSON.",
+        },
+      },
       {
         id: "primer-endpoint",
         title: "Construir tu primer endpoint de API",
         summary:
-          "Crear una ruta de API con el App Router y responder JSON desde el servidor.",
-      },
-    ],
-  },
-  {
-    id: "deploy",
-    navLabel: "Vercel",
-    title: "Parte 3 — De GitHub a Vercel",
-    description:
-      "Cierras el ciclo fullstack: el mismo código en un repositorio y una URL pública en producción.",
-    steps: [
-      {
-        id: "vercel",
-        title: "Desplegar en Vercel",
-        summary:
-          "Conectar el repositorio con Vercel, revisar el build y obtener tu sitio en línea.",
+          "Dónde colocar las rutas en app/api, cómo se traduce la carpeta a la URL y el contenido mínimo de route.ts para devolver JSON.",
+        readingMdxSlug: "api/primer-endpoint",
       },
     ],
   },

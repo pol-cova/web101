@@ -27,7 +27,8 @@ import { PanelLeftIcon } from "lucide-react"
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "16rem"
-const SIDEBAR_WIDTH_MOBILE = "18rem"
+/** Ancho del drawer en móvil: casi pantalla completa con margen, sin quedar a media anchura. */
+const SIDEBAR_WIDTH_MOBILE = "min(100vw - 1.25rem, 26rem)"
 const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -186,7 +187,15 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          className={cn(
+            "bg-sidebar p-0 text-sidebar-foreground",
+            // Ancho amplio en móvil (anula w-3/4 y sm:max-w-sm del Sheet por defecto)
+            "w-[var(--sidebar-width)] !max-w-[var(--sidebar-width)] sm:!max-w-[var(--sidebar-width)]",
+            // Botón cerrar visible, acoplado al tema del sidebar y al área segura
+            "[&>button]:z-30 [&>button]:border-sidebar-border/50 [&>button]:bg-sidebar-accent/55 [&>button]:text-sidebar-foreground [&>button]:shadow-sm",
+            "hover:[&>button]:bg-sidebar-accent [&>button]:top-[max(0.65rem,env(safe-area-inset-top))] [&>button]:right-3",
+            "touch-manipulation"
+          )}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -195,10 +204,14 @@ function Sidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+            <SheetTitle>Navegación del curso</SheetTitle>
+            <SheetDescription>Menú lateral con las lecciones.</SheetDescription>
           </SheetHeader>
-          <div className="flex h-full w-full flex-col">{children}</div>
+          <div
+            className="flex h-full min-h-0 w-full flex-col overflow-hidden px-3 pt-[max(0.35rem,env(safe-area-inset-top))] pr-14 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          >
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     )
@@ -206,7 +219,13 @@ function Sidebar({
 
   return (
     <div
-      className="group peer hidden text-sidebar-foreground md:block"
+      className={cn(
+        // `className` del consumidor (p. ej. [--sidebar-width:…]) debe ir aquí para que
+        // el hueco (sidebar-gap) y el panel fijo compartan la misma variable y el contenido
+        // principal no quede debajo del sidebar.
+        "group peer hidden shrink-0 text-sidebar-foreground md:block",
+        className
+      )}
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-variant={variant}
@@ -233,8 +252,7 @@ function Sidebar({
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
-          className
+            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l"
         )}
         {...props}
       >
@@ -252,26 +270,43 @@ function Sidebar({
 
 function SidebarTrigger({
   className,
+  label,
   onClick,
+  title,
+  "aria-label": ariaLabel,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof Button> & {
+  /** Texto visible junto al icono (p. ej. «Lecciones» / «Ocultar»). */
+  label?: string
+}) {
   const { toggleSidebar } = useSidebar()
 
   return (
     <Button
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
-      variant="ghost"
-      size="icon-sm"
-      className={cn(className)}
+      type="button"
+      variant="outline"
+      size={label ? "sm" : "icon"}
+      aria-label={ariaLabel ?? "Mostrar u ocultar panel de lecciones"}
+      title={title ?? "Mostrar u ocultar panel de lecciones"}
+      className={cn(
+        "shrink-0 gap-2 text-foreground shadow-sm",
+        label ? "px-3" : "size-9 [&_svg]:size-4",
+        className
+      )}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-      <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      <PanelLeftIcon className="shrink-0" aria-hidden />
+      {label ? (
+        <span className="max-w-[10rem] truncate font-medium sm:max-w-none" aria-hidden>
+          {label}
+        </span>
+      ) : null}
     </Button>
   )
 }

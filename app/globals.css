@@ -127,3 +127,33 @@
     @apply font-sans;
     }
 }
+
+@keyframes course-arrow-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scaleX(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes course-dot-move {
+  0% {
+    left: 0%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes course-dot-move-reverse {
+  0% {
+    left: 100%;
+  }
+  100% {
+    left: 0%;
+  }
+}

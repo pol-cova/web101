@@ -1,12 +1,6 @@
-import Link from "next/link"
-
 import { CourseAppSidebar } from "@/components/course-app-sidebar"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
+import { CourseLayoutHeader } from "@/components/course-layout-header"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 export default function CursoLayout({
   children,
@@ -14,20 +8,11 @@ export default function CursoLayout({
   children: React.ReactNode
 }>) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <CourseAppSidebar />
-      <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-6" />
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Volver al inicio
-          </Link>
-        </header>
-        <div className="flex flex-1 flex-col">{children}</div>
+      <SidebarInset className="min-w-0">
+        <CourseLayoutHeader />
+        <div className="flex min-w-0 flex-1 flex-col">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   )

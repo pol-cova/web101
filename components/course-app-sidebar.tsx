@@ -37,7 +37,7 @@ export function CourseAppSidebar() {
       collapsible="icon"
       className="[--sidebar-width:clamp(17rem,min(92vw,20rem),22rem)] md:[--sidebar-width:19.5rem]"
     >
-      <SidebarHeader className="gap-3 border-b border-sidebar-border px-2 py-3 sm:py-4">
+      <SidebarHeader className="gap-3 border-b border-sidebar-border px-2 py-3 max-md:px-0 sm:py-4">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Inicio">
@@ -49,10 +49,10 @@ export function CourseAppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
         <p className="px-2 text-xs leading-snug text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
-          Curso fullstack: local, API y despliegue en Vercel.
+          Curso: entorno local, API en Next.js y bases de HTTP.
         </p>
       </SidebarHeader>
-      <SidebarContent className="overflow-x-hidden overflow-y-auto px-2">
+      <SidebarContent className="overflow-x-hidden overflow-y-auto px-2 max-md:px-0">
         <SidebarGroup className="px-0">
           <SidebarGroupLabel className="flex items-center gap-2 px-0">
             <BookOpen className="size-4 shrink-0" aria-hidden />

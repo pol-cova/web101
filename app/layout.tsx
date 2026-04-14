@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s — Web101",
   },
   description:
-    "Curso fullstack con Next.js y Prisma: entorno local, API y despliegue en Vercel.",
+    "Curso introductorio con Next.js y Prisma: entorno local, fundamentos de API y HTTP, y tu primer endpoint.",
 }
 
 export default function RootLayout({

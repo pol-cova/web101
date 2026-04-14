@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
+import { CourseStepMdx } from "@/components/course-step-mdx"
 import { CourseStepPagination } from "@/components/course-step-pagination"
 import { CourseStepView } from "@/components/course-step-view"
 import {
@@ -37,9 +38,8 @@ export default async function CourseStepPage({ params }: Props) {
   const idx = globalStepIndex(section, stepId)
   const total = totalCourseSteps()
   const stepNum = idx >= 0 ? idx + 1 : 0
-
   return (
-    <article className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+    <article className="mx-auto w-full min-w-0 max-w-4xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
       <p className="text-xs font-medium text-muted-foreground">
         {sec.navLabel}
         {stepNum > 0 && total > 0 ? (
@@ -53,7 +53,13 @@ export default async function CourseStepPage({ params }: Props) {
       <p className="mt-3 text-pretty leading-relaxed text-muted-foreground">{step.summary}</p>
 
       <div className="mt-8">
-        <CourseStepView step={step} stepIndex={idx >= 0 ? idx : 0} />
+        <CourseStepView
+          step={step}
+          stepIndex={idx >= 0 ? idx : 0}
+          readingMdx={
+            step.readingMdxSlug ? <CourseStepMdx slug={step.readingMdxSlug} /> : undefined
+          }
+        />
       </div>
 
       <CourseStepPagination sectionId={section} stepId={stepId} />

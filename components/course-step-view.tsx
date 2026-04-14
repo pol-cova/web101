@@ -2,6 +2,7 @@
 
 import * as React from "react"
 
+import { CourseReadingPanel } from "@/components/course-reading/course-reading-panel"
 import { CloneRepoPanel, SingleCommandPanel } from "@/components/course-step-panels"
 import type { CourseStep } from "@/lib/course-data"
 import {
@@ -22,9 +23,11 @@ function saveCompleted(next: Record<string, boolean>) {
 type CourseStepViewProps = {
   step: CourseStep
   stepIndex: number
+  /** Contenido MDX opcional (paso con `readingMdxSlug`). */
+  readingMdx?: React.ReactNode
 }
 
-export function CourseStepView({ step, stepIndex }: CourseStepViewProps) {
+export function CourseStepView({ step, stepIndex, readingMdx }: CourseStepViewProps) {
   const [completed, setCompleted] = React.useState<Record<string, boolean>>({})
   const [copiedId, setCopiedId] = React.useState<string | null>(null)
   const [copiedSnippetKey, setCopiedSnippetKey] = React.useState<string | null>(null)
@@ -84,10 +87,19 @@ export function CourseStepView({ step, stepIndex }: CourseStepViewProps) {
 
   const interactive = step.interactive
   const hasInteractive = Boolean(interactive)
+  const reading = step.reading
+  const hasReadingBody = Boolean(readingMdx || reading)
 
   return (
     <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm sm:p-6">
-      {interactive?.kind === "clone-repo" ? (
+      {hasReadingBody ? (
+        <CourseReadingPanel
+          step={step}
+          isDone={Boolean(isDone)}
+          mdxContent={readingMdx}
+          onMarkComplete={() => markComplete(step.id)}
+        />
+      ) : interactive?.kind === "clone-repo" ? (
         <CloneRepoPanel
           step={step}
           stepIndex={stepIndex}
