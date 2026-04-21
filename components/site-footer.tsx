@@ -20,7 +20,7 @@ export function SiteFooter({ className }: { className?: string }) {
       className={cn("border-t border-border/80 py-8 text-center text-muted-foreground", className)}
     >
       <p className="mx-auto max-w-lg px-4 text-sm leading-relaxed text-foreground/90">
-        Curso Web101 con Next.js fullstack.
+        AI Taller — Swift Changemakers Hackathon 2026.
       </p>
       <nav
         aria-label="Enlaces del autor"

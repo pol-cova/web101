@@ -1,4 +1,4 @@
-export const COURSE_PROGRESS_STORAGE_KEY = "web101-course-steps-completed"
+export const COURSE_PROGRESS_STORAGE_KEY = "ai-taller-course-steps-completed"
 
 export function loadCourseProgress(): Record<string, boolean> {
   if (typeof window === "undefined") return {}

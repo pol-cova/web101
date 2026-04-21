@@ -5,13 +5,24 @@ import { Check } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import type { CourseReadingDiagram, CourseStep } from "@/lib/course-data"
+import { CodeBlock } from "@/components/code-block"
 import { CourseMarkdown } from "@/components/course-reading/course-markdown"
 import { DiagramApiBridge } from "./diagram-api-bridge"
+import { DiagramCombinedPipeline } from "./diagram-combined-pipeline"
+import { DiagramFrameworkDecision } from "./diagram-framework-decision"
+import { DiagramFoundationModelsArch } from "./diagram-foundation-models-arch"
 import { DiagramHttpRoundtrip } from "./diagram-http-roundtrip"
+import { DiagramOnDeviceVsCloud } from "./diagram-ondevice-vs-cloud"
+import { DiagramVisionPipeline } from "./diagram-vision-pipeline"
 
 const DIAGRAMS: Record<CourseReadingDiagram, ComponentType> = {
   "api-bridge": DiagramApiBridge,
   "http-roundtrip": DiagramHttpRoundtrip,
+  "ondevice-vs-cloud": DiagramOnDeviceVsCloud,
+  "framework-decision": DiagramFrameworkDecision,
+  "vision-pipeline": DiagramVisionPipeline,
+  "foundation-models-arch": DiagramFoundationModelsArch,
+  "combined-pipeline": DiagramCombinedPipeline,
 }
 
 export type CourseReadingPanelProps = {
@@ -64,14 +75,9 @@ export function CourseReadingPanel({
             ))}
           </div>
           {section.snippet ? (
-            <figure className="space-y-2 pt-1">
-              {section.snippet.file ? (
-                <figcaption className="font-mono text-xs text-muted-foreground">{section.snippet.file}</figcaption>
-              ) : null}
-              <pre className="overflow-x-auto rounded-xl border border-border/80 bg-muted/40 p-4 text-xs leading-relaxed text-foreground shadow-inner">
-                <code className="font-mono whitespace-pre">{section.snippet.code.trim()}</code>
-              </pre>
-            </figure>
+            <CodeBlock filename={section.snippet.file}>
+              {section.snippet.code.trim()}
+            </CodeBlock>
           ) : null}
         </section>
       ))}

@@ -1,0 +1,294 @@
+En esta demo construirás un asistente conversacional que corre completamente en el dispositivo usando **Foundation Models** (iOS 26+). Generará respuestas de texto, extraerá estructuras tipadas con `@Generable` y llamará a herramientas personalizadas. No se requiere conexión a internet ni API key externa.
+
+> **Requisito**: iOS 26+, dispositivo físico eligible con Apple Intelligence habilitada. El simulador compila pero no ejecuta peticiones reales.
+
+## Paso 1: Verificar disponibilidad del modelo
+
+Antes de crear una sesión, siempre verifica que el modelo esté disponible. Esto evita crashes y permite mostrar mensajes útiles al usuario.
+
+```swift
+import SwiftUI
+import FoundationModels
+
+struct GenerativeAssistantView: View {
+    private var model = SystemLanguageModel.default
+    
+    var body: some View {
+        switch model.availability {
+        case .available:
+            AssistantContentView()
+        case .unavailable(.deviceNotEligible):
+            UnavailableView(message: "Este dispositivo no es eligible para Apple Intelligence.")
+        case .unavailable(.appleIntelligenceNotEnabled):
+            UnavailableView(message: "Activa Apple Intelligence en Ajustes > Apple Intelligence.")
+        case .unavailable(.modelNotReady):
+            UnavailableView(message: "El modelo se está descargando. Espera unos minutos e intenta de nuevo.")
+        case .unavailable(let other):
+            UnavailableView(message: "Modelo no disponible: \(String(describing: other))")
+        }
+    }
+}
+
+struct UnavailableView: View {
+    let message: String
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 48))
+                .foregroundColor(.orange)
+            Text(message)
+                .multilineTextAlignment(.center)
+                .padding()
+        }
+    }
+}
+```
+
+`GenerativeAssistantView.swift`
+
+## Paso 2: Sesión básica de generación
+
+Crea un `LanguageModelSession` y envía mensajes con `respond(to:)`. Reusa la sesión para mantener contexto de conversación.
+
+```swift
+import FoundationModels
+
+class AssistantModel: ObservableObject {
+    private let session: LanguageModelSession
+    
+    @Published var messages: [Message] = []
+    @Published var isThinking = false
+    
+    struct Message: Identifiable {
+        let id = UUID()
+        let role: Role
+        let text: String
+        
+        enum Role {
+            case user
+            case assistant
+        }
+    }
+    
+    init() {
+        self.session = LanguageModelSession(instructions: """
+            Eres un asistente útil y conciso.
+            Responde siempre en español.
+            Si no sabes algo, dilo claramente.
+            """)
+    }
+    
+    func send(_ text: String) async {
+        await MainActor.run {
+            messages.append(Message(role: .user, text: text))
+            isThinking = true
+        }
+        
+        do {
+            let response = try await session.respond(to: text)
+            await MainActor.run {
+                messages.append(Message(role: .assistant, text: response.content))
+                isThinking = false
+            }
+        } catch {
+            await MainActor.run {
+                messages.append(Message(role: .assistant, text: "Error: \(error.localizedDescription)"))
+                isThinking = false
+            }
+        }
+    }
+}
+```
+
+`AssistantModel.swift`
+
+## Paso 3: UI de chat en SwiftUI
+
+```swift
+struct AssistantContentView: View {
+    @StateObject private var assistant = AssistantModel()
+    @State private var inputText: String = ""
+    
+    var body: some View {
+        VStack {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 12) {
+                    ForEach(assistant.messages) { message in
+                        MessageBubble(message: message)
+                    }
+                    if assistant.isThinking {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Pensando...")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                .padding()
+            }
+            
+            HStack(spacing: 12) {
+                TextField("Escribe un mensaje...", text: $inputText, axis: .vertical)
+                    .textFieldStyle(.roundedBorder)
+                    .lineLimit(1...4)
+                
+                Button(action: submit) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title2)
+                }
+                .disabled(inputText.isEmpty || assistant.isThinking)
+            }
+            .padding()
+        }
+    }
+    
+    func submit() {
+        let text = inputText
+        inputText = ""
+        Task {
+            await assistant.send(text)
+        }
+    }
+}
+
+struct MessageBubble: View {
+    let message: AssistantModel.Message
+    
+    var body: some View {
+        HStack {
+            if message.role == .assistant { Spacer(minLength: 40) }
+            Text(message.text)
+                .padding(12)
+                .background(message.role == .user ? Color.accentColor : Color(.systemGray5))
+                .foregroundColor(message.role == .user ? .white : .primary)
+                .cornerRadius(16)
+            if message.role == .user { Spacer(minLength: 40) }
+        }
+    }
+}
+```
+
+`AssistantContentView.swift`
+
+## Paso 4: Generación estructurada con @Generable
+
+En lugar de recibir texto libre, puedes pedirle al modelo que genere una estructura Swift tipada. Esto es útil para formularios, configuraciones o extracción de datos.
+
+```swift
+import FoundationModels
+
+@Generable(description: "Información de un evento extraído de texto libre")
+struct Evento {
+    var nombre: String
+    
+    @Guide(description: "Fecha del evento en formato YYYY-MM-DD")
+    var fecha: String
+    
+    @Guide(description: "Hora en formato HH:MM")
+    var hora: String
+    
+    @Guide(description: "Lugar donde ocurre")
+    var lugar: String
+}
+
+func extraerEvento(de texto: String) async throws -> Evento {
+    let session = LanguageModelSession()
+    let response = try await session.respond(
+        to: "Extrae el evento de este texto: \(texto)",
+        generating: Evento.self
+    )
+    return response.content
+}
+
+// Uso:
+// let evento = try await extraerEvento(de: "Reunión de equipo mañana a las 10 en la sala Jupiter")
+// print(evento.nombre) // "Reunión de equipo"
+// print(evento.fecha)  // "2026-04-22"
+// print(evento.hora)   // "10:00"
+```
+
+`EventExtractor.swift`
+
+## Paso 5: Tool calling (llamada a herramientas)
+
+Puedes darle al modelo herramientas personalizadas que invocarán código Swift tuyo. Esto extiende la IA al mundo real: buscar en bases de datos, calcular rutas, enviar notificaciones.
+
+```swift
+import FoundationModels
+
+struct WeatherTool: Tool {
+    let name = "weather_lookup"
+    let description = "Obtiene el clima actual para una ciudad dada."
+    
+    @Generable
+    struct Arguments {
+        var ciudad: String
+    }
+    
+    func call(arguments: Arguments) async throws -> ToolOutput {
+        // En una app real, aquí llamarías a una API meteorológica
+        let clima = "Soleado, 24°C"
+        return .string("El clima en \(arguments.ciudad) es: \(clima)")
+    }
+}
+
+func asistenteConClima() async throws -> String {
+    let session = LanguageModelSession(tools: [WeatherTool()])
+    let response = try await session.respond(to: "¿Qué tiempo hace en Madrid?")
+    return response.content
+}
+```
+
+`WeatherTool.swift`
+
+## Paso 6: Streaming para UI en tiempo real
+
+Si la respuesta es larga, usa `streamResponse` para mostrar el contenido progresivamente en lugar de esperar a que termine.
+
+```swift
+@Generable
+struct IdeaCreativa {
+    @Guide(description: "Título de la idea")
+    var titulo: String
+    @Guide(description: "Descripción breve")
+    var descripcion: String
+}
+
+func streamIdeas(for prompt: String) async throws {
+    let session = LanguageModelSession()
+    let stream = session.streamResponse(
+        to: prompt,
+        generating: IdeaCreativa.self
+    )
+    
+    for try await partial in stream {
+        // partial es IdeaCreativa.PartiallyGenerated
+        // todas las propiedades son Optional
+        if let titulo = partial.titulo {
+            print("Título recibido: \(titulo)")
+        }
+        if let desc = partial.descripcion {
+            print("Descripción recibida: \(desc)")
+        }
+    }
+}
+```
+
+`IdeaStreamer.swift`
+
+## Puntos clave para el hackathon
+
+- **Contexto importa**: las `instructions` del `LanguageModelSession` tienen más peso que los prompts individuales. Define el rol, idioma y restricciones allí.
+- **Una petición a la vez**: `isResponding` evita peticiones concurrentes. Si necesitas paralelismo, crea múltiples sesiones.
+- **Límite de tokens**: 4,096 tokens combinados (instrucciones + prompt + salida). Para textos largos, divide en chunks.
+- **Temperatura**: usa `GenerationOptions(temperature: 0.2)` para respuestas deterministas y `0.8` para creativas.
+- **Fallback siempre**: si Foundation Models no está disponible, muestra una UI alternativa o usa Natural Language + Core ML.
+
+## Recursos relacionados
+
+- [Documentación de Foundation Models](https://developer.apple.com/documentation/foundationmodels/)
+- [LanguageModelSession](https://developer.apple.com/documentation/foundationmodels/languagemodelsession)
+- [@Generable macro](https://developer.apple.com/documentation/foundationmodels/generable)
+- [Tool protocol](https://developer.apple.com/documentation/foundationmodels/tool)

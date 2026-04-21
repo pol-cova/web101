@@ -5,6 +5,7 @@ import {
   type ReactNode,
 } from "react"
 
+import { CodeBlock } from "@/components/code-block"
 import { Mermaid } from "@/components/mdx-mermaid"
 import { cn } from "@/lib/utils"
 
@@ -56,6 +57,14 @@ function Pre({ children, ...props }: ComponentPropsWithoutRef<"pre">) {
       const chart = textFromReactNode(p.children).replace(/\n$/, "")
       return <Mermaid chart={chart} />
     }
+    // Extract filename from data-filename attribute or comment
+    const codeText = textFromReactNode(p.children)
+    const filename = extractFilename(codeText)
+    return (
+      <CodeBlock filename={filename}>
+        <code className={cn("font-mono text-xs", p.className)}>{p.children}</code>
+      </CodeBlock>
+    )
   }
   return (
     <pre
@@ -65,6 +74,13 @@ function Pre({ children, ...props }: ComponentPropsWithoutRef<"pre">) {
       {children}
     </pre>
   )
+}
+
+function extractFilename(code: string): string | undefined {
+  // Match // filename.swift or /* filename.swift */ at the start
+  const match = code.trim().match(/^\/\/\s*([^\n]+?\.(?:swift|ts|js|jsx|tsx|json|prisma|env|md))\s*\n/)
+  if (match) return match[1].trim()
+  return undefined
 }
 
 function Code({ className, children, ...props }: ComponentPropsWithoutRef<"code">) {

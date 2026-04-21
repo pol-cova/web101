@@ -1,0 +1,243 @@
+En esta demo construirás una app SwiftUI que usa la cámara para reconocer texto en tiempo real (OCR) y detectar objetos comunes. Todo ocurre en el dispositivo, sin enviar imágenes a ningún servidor.
+
+## Arquitectura de la demo
+
+La app tiene dos modos que puedes alternar con un `Picker`:
+1. **Texto** — usa `VNRecognizeTextRequest` para leer palabras de la cámara.
+2. **Objetos** — usa `VNDetectRectanglesRequest` + `VNRecognizeTextRequest` para encontrar documentos y leer su contenido.
+
+Ambos requests se ejecutan sobre un `CVPixelBuffer` que proviene de `AVCaptureVideoDataOutput`.
+
+```mermaid
+flowchart TD
+    A[Cámara<br/>AVCaptureSession] --> B[Frame<br/>CMSampleBuffer]
+    B --> C[CVPixelBuffer]
+    C --> D{Modo}
+    D -->|Texto| E[VNRecognizeTextRequest]
+    D -->|Objetos| F[VNDetectRectanglesRequest]
+    F --> G[Recortar región]
+    G --> E
+    E --> H[Resultados<br/>[VNRecognizedTextObservation]]
+    H --> I[SwiftUI UI]
+```
+
+_Flujo de datos: desde la cámara hasta la interfaz de usuario, pasando por el procesamiento de Vision._
+
+## Paso 1: Configurar la sesión de cámara
+
+Creamos un `CameraManager` observable que gestiona `AVCaptureSession`. Esto mantiene la lógica fuera de la vista y facilita los previews en SwiftUI.
+
+```swift
+import AVFoundation
+import SwiftUI
+import Combine
+
+class CameraManager: NSObject, ObservableObject {
+    @Published var session = AVCaptureSession()
+    @Published var previewLayer: AVCaptureVideoPreviewLayer?
+    
+    private var videoOutput = AVCaptureVideoDataOutput()
+    private let sessionQueue = DispatchQueue(label: "camera-session")
+    
+    var onFrame: ((CMSampleBuffer) -> Void)?
+    
+    override init() {
+        super.init()
+        configureSession()
+    }
+    
+    func configureSession() {
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            self.session.beginConfiguration()
+            self.session.sessionPreset = .high
+            
+            guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+                  let input = try? AVCaptureDeviceInput(device: device),
+                  self.session.canAddInput(input) else {
+                self.session.commitConfiguration()
+                return
+            }
+            self.session.addInput(input)
+            
+            self.videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "video-output"))
+            self.videoOutput.alwaysDiscardsLateVideoFrames = true
+            if self.session.canAddOutput(self.videoOutput) {
+                self.session.addOutput(self.videoOutput)
+            }
+            
+            self.session.commitConfiguration()
+            self.session.startRunning()
+        }
+    }
+}
+
+extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        onFrame?(sampleBuffer)
+    }
+}
+```
+
+`CameraPreviewView.swift`
+
+## Paso 2: Crear la vista de preview
+
+Usamos `UIViewRepresentable` para envolver `AVCaptureVideoPreviewLayer` dentro de SwiftUI.
+
+```swift
+import SwiftUI
+import AVFoundation
+
+struct CameraPreviewView: UIViewRepresentable {
+    let session: AVCaptureSession
+    
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView(frame: UIScreen.main.bounds)
+        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
+        previewLayer.frame = view.bounds
+        previewLayer.videoGravity = .resizeAspectFill
+        view.layer.addSublayer(previewLayer)
+        return view
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {}
+}
+```
+
+`CameraPreviewView.swift`
+
+## Paso 3: Reconocimiento de texto con Vision
+
+Implementamos ` recognizeText(from:)` como una función async que ejecuta el request de Vision en un `Task`.
+
+```swift
+import Vision
+
+func recognizeText(from sampleBuffer: CMSampleBuffer) async -> [String] {
+    guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return [] }
+    
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate // .fast para tiempo real
+    request.usesLanguageCorrection = true
+    
+    let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
+    
+    do {
+        try handler.perform([request])
+        guard let observations = request.results as? [VNRecognizedTextObservation] else { return [] }
+        return observations.compactMap { $0.topCandidates(1).first?.string }
+    } catch {
+        print("Error en OCR: \(error)")
+        return []
+    }
+}
+```
+
+`TextRecognizer.swift`
+
+## Paso 4: Vista principal en SwiftUI
+
+Conectamos todo en una vista que muestra la cámara, un selector de modo y las palabras detectadas en una lista superpuesta.
+
+```swift
+import SwiftUI
+
+struct VisionDemoView: View {
+    @StateObject private var camera = CameraManager()
+    @State private var detectedTexts: [String] = []
+    @State private var mode: Mode = .text
+    
+    enum Mode: String, CaseIterable {
+        case text = "Texto"
+        case objects = "Objetos"
+    }
+    
+    var body: some View {
+        ZStack {
+            CameraPreviewView(session: camera.session)
+                .ignoresSafeArea()
+            
+            VStack {
+                Picker("Modo", selection: $mode) {
+                    ForEach(Mode.allCases, id: \.self) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding()
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                .padding(.horizontal)
+                
+                Spacer()
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(detectedTexts, id: \.self) { text in
+                            Text(text)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(.black.opacity(0.6))
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                    }
+                    .padding()
+                }
+                .frame(maxHeight: 200)
+            }
+        }
+        .onAppear {
+            camera.onFrame = { sampleBuffer in
+                Task {
+                    let texts = await recognizeText(from: sampleBuffer)
+                    await MainActor.run {
+                        self.detectedTexts = texts
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+`VisionDemoView.swift`
+
+## Variante: detección de objetos con rectángulos
+
+Si eliges el modo **Objetos**, cambia el request por `VNDetectRectanglesRequest` para resaltar documentos, tarjetas o carteles.
+
+```swift
+func detectRectangles(from sampleBuffer: CMSampleBuffer) async -> [VNRectangleObservation] {
+    guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return [] }
+    
+    let request = VNDetectRectanglesRequest()
+    request.minimumAspectRatio = 0.3
+    request.maximumAspectRatio = 1.0
+    request.minimumSize = 0.2
+    
+    let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+    
+    do {
+        try handler.perform([request])
+        return request.results as? [VNRectangleObservation] ?? []
+    } catch {
+        return []
+    }
+}
+```
+
+`RectangleDetector.swift`
+
+## Puntos clave para el hackathon
+
+- **No olvides el Info.plist**: añade `NSCameraUsageDescription` o la app se cerrará al acceder a la cámara.
+- **Rendimiento**: en tiempo real usa `.fast` en `recognitionLevel`. Si el usuario toma una foto fija, cambia a `.accurate`.
+- **Combínalo**: después de detectar un rectángulo, recorta esa región y pásala a `VNRecognizeTextRequest` para leer solo el documento enfocado.
+
+## Recursos relacionados
+
+- [Documentación de Vision](https://developer.apple.com/documentation/vision/)
+- [VNRecognizeTextRequest](https://developer.apple.com/documentation/vision/vnrecognizetextrequest)
+- [VNDetectRectanglesRequest](https://developer.apple.com/documentation/vision/vndetectrectanglesrequest)

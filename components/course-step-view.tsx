@@ -124,8 +124,7 @@ export function CourseStepView({ step, stepIndex, readingMdx }: CourseStepViewPr
         </p>
       ) : (
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Contenido de la lección: próximamente. Mientras tanto, revisa el código del proyecto y la
-          documentación de Next.js en tu editor.
+          Contenido de la lección: próximamente. Mientras tanto, revisa la documentación oficial de Apple y los sample code en Xcode.
         </p>
       )}
     </div>

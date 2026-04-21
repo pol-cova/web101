@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, BookOpen, Globe, Terminal } from "lucide-react"
+import { ArrowRight, Brain, Eye, MessageSquare } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { courseSections } from "@/lib/course-data"
@@ -12,19 +12,19 @@ const firstLessonHref = firstLesson
 
 const highlights = [
   {
-    icon: Terminal,
-    title: "Configura el entorno",
-    body: "Plantilla en GitHub, npm install y npm run dev hasta ver la app en el navegador.",
+    icon: Eye,
+    title: "Vision",
+    body: "Reconoce texto y objetos en tiempo real desde la cámara. OCR, detección de rostros y análisis de escenas directamente en el dispositivo.",
   },
   {
-    icon: Globe,
-    title: "API con Next.js",
-    body: "Un mismo proyecto sirve la web y rutas de API; tu primer endpoint que devuelve JSON.",
+    icon: MessageSquare,
+    title: "Natural Language",
+    body: "Analiza sentimientos, detecta idiomas y extrae entidades de cualquier texto. Sin conexión, sin API keys, sin enviar datos a la nube.",
   },
   {
-    icon: BookOpen,
-    title: "API y HTTP",
-    body: "Qué es una API, peticiones y respuestas, métodos y JSON; luego tu primer endpoint en el mismo proyecto.",
+    icon: Brain,
+    title: "Foundation Models",
+    body: "Genera lenguaje, estructura datos y crea asistentes inteligentes con modelos LLM que corren localmente en tu iPhone o Mac (iOS 26+).",
   },
 ] as const
 
@@ -36,18 +36,18 @@ export default function Page() {
         aria-hidden
       />
       <section className="mx-auto max-w-5xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
-        <p className="text-sm font-medium text-muted-foreground">Curso introductorio</p>
+        <p className="text-sm font-medium text-muted-foreground">Swift Changemakers Hackathon 2026</p>
         <h1 className="mt-3 max-w-3xl text-balance text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
-          Desarrollo web con Next.js fullstack y Prisma
+          IA on-device con Swift
         </h1>
         <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-          Código en tu máquina, fundamentos claros de API y HTTP, y rutas de API en Next.js con Prisma
-          cuando el temario lo incorpore.
+          Taller práctico de inteligencia artificial local: Vision, Natural Language, Core ML y Foundation Models.
+          Human Centered AI que respeta la privacidad y funciona sin conexión.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Button size="lg" asChild>
             <Link href={firstLessonHref}>
-              Empezar el curso
+              Empezar el taller
               <ArrowRight className="size-4" data-icon="inline-end" aria-hidden />
             </Link>
           </Button>
@@ -63,7 +63,7 @@ export default function Page() {
 
       <section className="border-t border-border/80 bg-muted/30 py-14 sm:py-20">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <h2 className="text-lg font-semibold tracking-tight sm:text-xl">En el curso</h2>
+          <h2 className="text-lg font-semibold tracking-tight sm:text-xl">En el taller</h2>
           <ul className="mt-8 grid gap-6 md:grid-cols-3">
             {highlights.map(({ icon: Icon, title, body }) => (
               <li

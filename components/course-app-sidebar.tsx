@@ -43,13 +43,13 @@ export function CourseAppSidebar() {
             <SidebarMenuButton asChild tooltip="Inicio">
               <Link href="/" aria-label="Inicio">
                 <Home />
-                <span className="group-data-[collapsible=icon]:hidden">Web101</span>
+                <span className="group-data-[collapsible=icon]:hidden">AI Taller</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
         <p className="px-2 text-xs leading-snug text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">
-          Curso: entorno local, API, HTTP, datos y Prisma.
+          Taller: IA on-device con Swift para el Hackathon 2026.
         </p>
       </SidebarHeader>
       <SidebarContent className="overflow-x-hidden overflow-y-auto px-2 max-md:px-0">

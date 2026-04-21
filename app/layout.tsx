@@ -15,11 +15,11 @@ const fontMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Web101 — Introducción al desarrollo web",
-    template: "%s — Web101",
+    default: "AI Taller — Swift Changemakers Hackathon 2026",
+    template: "%s — AI Taller",
   },
   description:
-    "Curso introductorio con Next.js y Prisma: entorno local, fundamentos de API y HTTP, y tu primer endpoint.",
+    "Taller práctico de IA on-device con Swift: Vision, Natural Language, Core ML y Foundation Models. Human Centered AI en tu dispositivo.",
 }
 
 export default function RootLayout({

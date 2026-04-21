@@ -1,21 +1,17 @@
 import type { ComponentType } from "react"
 
-import ApiErPosSimple from "@/content/course/api/er-pos-simple.mdx"
-import ApiPrimerCrudProductos from "@/content/course/api/primer-crud-productos.mdx"
-import ApiPrimerEndpoint from "@/content/course/api/primer-endpoint.mdx"
-import ApiPrismaCliente from "@/content/course/api/prisma-cliente.mdx"
-import ApiPrismaEsquemaTpv from "@/content/course/api/prisma-esquema-tpv.mdx"
+import HandsOnVision from "@/content/course/hands-on/vision-texto-objetos.mdx"
+import HandsOnNL from "@/content/course/hands-on/nl-sentimientos.mdx"
+import HandsOnFoundation from "@/content/course/hands-on/foundation-generacion.mdx"
 
 /**
  * Mapa slug → componente MDX en `content/course/`.
  * Añade aquí nuevas lecciones y el tipo `CourseMdxSlug` se actualiza solo.
  */
 export const courseMdxBySlug = {
-  "api/er-pos-simple": ApiErPosSimple,
-  "api/primer-endpoint": ApiPrimerEndpoint,
-  "api/prisma-cliente": ApiPrismaCliente,
-  "api/prisma-esquema-tpv": ApiPrismaEsquemaTpv,
-  "api/primer-crud-productos": ApiPrimerCrudProductos,
+  "hands-on/vision-texto-objetos": HandsOnVision,
+  "hands-on/nl-sentimientos": HandsOnNL,
+  "hands-on/foundation-generacion": HandsOnFoundation,
 } as const
 
 export type CourseMdxSlug = keyof typeof courseMdxBySlug

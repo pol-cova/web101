@@ -3,6 +3,7 @@
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
+import { CodeBlock } from "@/components/code-block"
 import { cn } from "@/lib/utils"
 
 type CourseMarkdownProps = {
@@ -47,15 +48,28 @@ export function CourseMarkdown({ content, className }: CourseMarkdownProps) {
               </code>
             )
           },
-          pre: ({ children }) => (
-            <pre className="my-3 overflow-x-auto rounded-xl border border-border/80 bg-muted/40 p-4 text-xs shadow-inner">
-              {children}
-            </pre>
-          ),
+          pre: ({ children }) => {
+            // Try to extract text from code element inside pre
+            let codeText = ""
+            if (children && typeof children === "object" && "props" in children) {
+              const codeProps = (children as { props?: { children?: string; className?: string } }).props
+              codeText = String(codeProps?.children ?? "")
+            }
+            const filename = extractFilename(codeText)
+            return (
+              <CodeBlock filename={filename}>{children}</CodeBlock>
+            )
+          },
         }}
       >
         {content}
       </ReactMarkdown>
     </div>
   )
+}
+
+function extractFilename(code: string): string | undefined {
+  const match = code.trim().match(/^\/\/\s*([^\n]+?\.(?:swift|ts|js|jsx|tsx|json|prisma|env|md))\s*\n/)
+  if (match) return match[1].trim()
+  return undefined
 }
